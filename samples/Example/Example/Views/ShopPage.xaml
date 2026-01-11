@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<views:BaseContentPage x:Class="Example.Views.ShopPage"
+                       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:lottie="clr-namespace:MPowerKit.Lottie;assembly=MPowerKit.Lottie"
+                       xmlns:models="clr-namespace:Example.Models"
+                       xmlns:pullToRefresh="clr-namespace:Palmy.Maui.PullToRefresh;assembly=Palmy.Maui.PullToRefresh"
+                       xmlns:viewModels="clr-namespace:Example.ViewModels"
+                       xmlns:views="clr-namespace:Example.Views"
+                       x:DataType="viewModels:ShopViewModel"
+                       x:TypeArguments="viewModels:ShopViewModel"
+                       BackgroundColor="{StaticResource Secondary}"
+                       SafeAreaEdges="None">
+    <pullToRefresh:PullToRefreshView Margin="0"
+                                     Padding="0"
+                                     HorizontalOptions="Fill"
+                                     IsRefreshing="{Binding IsRefreshing}"
+                                     MaxPullDistance="420"
+                                     Pulling="PullToRefreshView_OnPulling"
+                                     RefreshCommand="{Binding RefreshCommand}"
+                                     RefreshHeight="120"
+                                     SafeAreaEdges="None"
+                                     Type="Overlay"
+                                     VerticalOptions="Fill">
+        <pullToRefresh:PullToRefreshView.RefreshView>
+            <Grid HeightRequest="120" IsClippedToBounds="True">
+                <Border Margin="15"
+                        Padding="0"
+                        BackgroundColor="White"
+                        HeightRequest="60"
+                        HorizontalOptions="Center"
+                        Stroke="{StaticResource Secondary}"
+                        StrokeShape="RoundRectangle 30,30,30,30"
+                        StrokeThickness="0"
+                        VerticalOptions="Center"
+                        WidthRequest="60">
+                    <Border.Shadow>
+                        <Shadow Brush="{StaticResource Gray200}"
+                                Radius="10"
+                                Offset="0,0" />
+                    </Border.Shadow>
+                    <lottie:LottieView x:Name="AnimationView"
+                                       Margin="0,0,0,0"
+                                       AutoPlay="False"
+                                       HardwareAcceleration="True"
+                                       HeightRequest="40"
+                                       HorizontalOptions="Center"
+                                       RepeatMode="Infinite"
+                                       Source="spinner.json"
+                                       VerticalOptions="Center"
+                                       WidthRequest="40" />
+                </Border>
+                <Image HeightRequest="40" WidthRequest="40">
+                    <Image.Source>
+                        <FontImageSource x:Name="RefreshViewFontImageSource"
+                                         FontFamily="FontAwesomeSolid"
+                                         Glyph="circle-down"
+                                         Color="{StaticResource Gray200}" />
+                    </Image.Source>
+                </Image>
+            </Grid>
+        </pullToRefresh:PullToRefreshView.RefreshView>
+
+        <CollectionView ItemsSource="{Binding Products}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:ShopItem">
+                    <Border Margin="15,15,15,0"
+                            BackgroundColor="White"
+                            HeightRequest="100"
+                            StrokeShape="RoundRectangle 5 5 5 5"
+                            StrokeThickness="0">
+
+                        <Grid ColumnDefinitions="Auto, *, Auto"
+                              ColumnSpacing="10"
+                              RowDefinitions="Auto, Auto, Auto">
+
+                            <Border Grid.Row="0"
+                                    Grid.RowSpan="3"
+                                    Grid.Column="0"
+                                    Margin="15"
+                                    Padding="15"
+                                    BackgroundColor="{StaticResource Gray200}"
+                                    HeightRequest="70"
+                                    StrokeShape="RoundRectangle 5, 5, 5, 5"
+                                    StrokeThickness="0"
+                                    VerticalOptions="Center"
+                                    WidthRequest="70" />
+                            <!--  Source="{Binding BrandImage}"  -->
+
+                            <Label Grid.Row="0"
+                                   Grid.Column="1"
+                                   FontFamily="OpenSansSemibold"
+                                   FontSize="18"
+                                   HorizontalOptions="Start"
+                                   Text="{Binding Name, StringFormat='{0}'}"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="End" />
+
+                            <Label Grid.Row="1"
+                                   Grid.Column="1"
+                                   FontSize="11"
+                                   HorizontalOptions="Start"
+                                   LineBreakMode="WordWrap"
+                                   Text="{Binding Description}"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="Start" />
+
+                            <Label Grid.Row="2"
+                                   Grid.Column="1"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   HorizontalOptions="Start"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="Start">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span FontAttributes="Bold"
+                                              FontSize="14"
+                                              Text="{Binding Price, StringFormat='{0:#,###,###.##} $'}" />
+                                        <Span Text=" " />
+                                        <Span FontSize="12"
+                                              Text="{Binding OldPrice, StringFormat='{0:#,###,###.##} $'}"
+                                              TextColor="{StaticResource Gray300}"
+                                              TextDecorations="Strikethrough" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.FooterTemplate>
+                <DataTemplate>
+                    <ContentView HeightRequest="15" />
+                </DataTemplate>
+            </CollectionView.FooterTemplate>
+        </CollectionView>
+    </pullToRefresh:PullToRefreshView>
+</views:BaseContentPage>

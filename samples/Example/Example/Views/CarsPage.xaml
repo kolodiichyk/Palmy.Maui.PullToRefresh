@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<views:BaseContentPage x:Class="Example.Views.CarsPage"
+                       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:helpers="clr-namespace:Example.Helpers"
+                       xmlns:lottie="clr-namespace:MPowerKit.Lottie;assembly=MPowerKit.Lottie"
+                       xmlns:models="clr-namespace:Example.Models"
+                       xmlns:pullToRefresh="clr-namespace:Palmy.Maui.PullToRefresh;assembly=Palmy.Maui.PullToRefresh"
+                       xmlns:viewModels="clr-namespace:Example.ViewModels"
+                       xmlns:views="clr-namespace:Example.Views"
+                       helpers:ShellEx.NavBarBottomLineIsVisible="False"
+                       x:DataType="viewModels:CarsViewModel"
+                       x:TypeArguments="viewModels:CarsViewModel"
+                       BackgroundColor="{StaticResource Secondary}"
+                       SafeAreaEdges="None">
+    <pullToRefresh:PullToRefreshView x:Name="PullToRefresh"
+                                     Margin="0"
+                                     Padding="0"
+                                     HorizontalOptions="Fill"
+                                     IsRefreshing="{Binding IsRefreshing}"
+                                     MaxPullDistance="420"
+                                     Pulling="PullToRefreshView_OnPulling"
+                                     RefreshCommand="{Binding RefreshCommand}"
+                                     RefreshHeight="120"
+                                     SafeAreaEdges="None"
+                                     Type="Normal"
+                                     VerticalOptions="Fill">
+        <pullToRefresh:PullToRefreshView.RefreshView>
+            <!--<Border Margin="0"
+                    Padding="0"
+                    HeightRequest="120"
+                    HorizontalOptions="Fill"
+                    StrokeThickness="0"
+                    ZIndex="999">
+                <lottie:LottieView x:Name="AnimationView"
+                                   Margin="0,15,0,0"
+                                   AutoPlay="False"
+                                   HardwareAcceleration="True"
+                                   HeightRequest="50"
+                                   HorizontalOptions="Center"
+                                   RepeatMode="Infinite"
+                                   Source="spinner.json"
+                                   VerticalOptions="Center"
+                                   WidthRequest="50" />
+            </Border>-->
+            <!--<ContentView HeightRequest="120" IsClippedToBounds="True">
+                <Border Margin="15"
+                        Padding="0"
+                        BackgroundColor="White"
+                        HeightRequest="60"
+                        HorizontalOptions="Center"
+                        Stroke="{StaticResource Secondary}"
+                        StrokeShape="RoundRectangle 30,30,30,30"
+                        StrokeThickness="0"
+                        VerticalOptions="Center"
+                        WidthRequest="60">
+                    <Border.Shadow>
+                        <Shadow Brush="{StaticResource Gray200}"
+                                Radius="10"
+                                Offset="0,0" />
+                    </Border.Shadow>
+                    <lottie:LottieView x:Name="AnimationView"
+                                       Margin="0,0,0,0"
+                                       AutoPlay="False"
+                                       HardwareAcceleration="True"
+                                       HeightRequest="40"
+                                       HorizontalOptions="Center"
+                                       RepeatMode="Infinite"
+                                       Source="spinner.json"
+                                       VerticalOptions="Center"
+                                       WidthRequest="40"
+                                       ZIndex="999" />
+                </Border>
+            </ContentView>-->
+            <Border Margin="0"
+                    Padding="0"
+                    BackgroundColor="White"
+                    HeightRequest="120"
+                    StrokeThickness="0">
+                <lottie:LottieView x:Name="AnimationView"
+                                   Margin="0,58,0,0"
+                                   AutoPlay="False"
+                                   HardwareAcceleration="True"
+                                   HeightRequest="240"
+                                   HorizontalOptions="Fill"
+                                   RepeatMode="Infinite"
+                                   Source="car.json"
+                                   VerticalOptions="Center" />
+            </Border>
+        </pullToRefresh:PullToRefreshView.RefreshView>
+
+        <CollectionView x:Name="CarCollectionView" ItemsSource="{Binding Cars}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:CarItem">
+                    <Border Margin="15,15,15,0"
+                            BackgroundColor="White"
+                            HeightRequest="100"
+                            StrokeShape="RoundRectangle 50 5 50 5"
+                            StrokeThickness="0">
+
+                        <Grid ColumnDefinitions="Auto, *, Auto"
+                              ColumnSpacing="10"
+                              RowDefinitions="Auto, Auto, Auto">
+
+                            <Border Grid.Row="0"
+                                    Grid.RowSpan="3"
+                                    Grid.Column="0"
+                                    Margin="15"
+                                    Padding="15"
+                                    BackgroundColor="{StaticResource Gray200}"
+                                    HeightRequest="70"
+                                    StrokeShape="RoundRectangle 35, 35, 35, 35"
+                                    StrokeThickness="0"
+                                    VerticalOptions="Center"
+                                    WidthRequest="70">
+
+                                <Image HeightRequest="45" WidthRequest="45">
+                                    <Image.Source>
+                                        <FileImageSource File="{Binding BrandImage}" />
+                                    </Image.Source>
+                                </Image>
+                            </Border>
+                            <!--  Source="{Binding BrandImage}"  -->
+
+                            <Label Grid.Row="0"
+                                   Grid.Column="1"
+                                   FontSize="11"
+                                   HorizontalOptions="Start"
+                                   Text="{Binding Brand, StringFormat='{0}'}"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="End" />
+
+                            <Label Grid.Row="1"
+                                   Grid.Column="1"
+                                   FontFamily="OpenSansSemibold"
+                                   FontSize="18"
+                                   HorizontalOptions="Start"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="Start">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span FontAttributes="Bold" Text="{Binding Model}" />
+                                        <Span FontSize="12" Text="{Binding Year, StringFormat=' ({0})'}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+
+                            <Label Grid.Row="2"
+                                   Grid.Column="1"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   HorizontalOptions="Start"
+                                   Text="{Binding Price, StringFormat='{0:#,###,###.##} $'}"
+                                   TextColor="{DynamicResource Gray500}"
+                                   VerticalOptions="Start" />
+
+                            <Border Grid.Row="0"
+                                    Grid.RowSpan="3"
+                                    Grid.Column="2"
+                                    Margin="10"
+                                    BackgroundColor="#eee"
+                                    HeightRequest="20"
+                                    StrokeShape="RoundRectangle 10"
+                                    StrokeThickness="0"
+                                    WidthRequest="20" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.FooterTemplate>
+                <DataTemplate>
+                    <ContentView HeightRequest="15" />
+                </DataTemplate>
+            </CollectionView.FooterTemplate>
+        </CollectionView>
+    </pullToRefresh:PullToRefreshView>
+</views:BaseContentPage>
