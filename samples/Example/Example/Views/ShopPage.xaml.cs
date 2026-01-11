@@ -33,9 +33,6 @@ public partial class ShopPage : BaseContentPage<ShopViewModel>
                 AnimationView.Play();
                 break;
             case PullToRefreshState.Finished:
-                AnimationView.Stop();
-                RefreshViewFontImageSource.Glyph = "circle-down";
-                break;
             case PullToRefreshState.Canceled:
                 AnimationView.Stop();
                 RefreshViewFontImageSource.Glyph = "circle-down";
