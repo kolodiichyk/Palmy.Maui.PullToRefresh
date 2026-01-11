@@ -11,6 +11,8 @@
         <PackageId>Palmy.Maui.PullToRefresh</PackageId>
         <Authors>Andrii Kolodiichyk</Authors>
         <Product>PullToRefresh for .net MAIU for iOS and Android</Product>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/kolodiichyk/Palmy.Maui.PullToRefresh</PackageProjectUrl>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
@@ -19,6 +21,16 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Content Include="..\..\..\README.md">
+        <Link>README.md</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
