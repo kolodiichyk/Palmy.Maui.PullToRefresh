@@ -11,32 +11,45 @@ namespace Example.Views;
 
 public partial class ShopPage : BaseContentPage<ShopViewModel>
 {
+    private PullToRefreshState _oldState;
+
     public ShopPage(ShopViewModel viewModel) : base(viewModel)
     {
         InitializeComponent();
     }
 
-    private void PullToRefreshView_OnPulling(object sender, PullToRefreshEventArgs e)
+    private async void PullToRefreshView_OnPulling(object sender, PullToRefreshEventArgs e)
     {
         switch (e.State)
         {
-            case PullToRefreshState.Pulling:
-                RefreshViewFontImageSource.Glyph = "circle-down";
-                break;
-            case PullToRefreshState.ReleaseToRefresh:
-                RefreshViewFontImageSource.Glyph = "circle-up";
-                break;
-            case PullToRefreshState.Released:
-                break;
             case PullToRefreshState.Refreshing:
-                RefreshViewFontImageSource.Glyph = null;
+                RefreshViewArrowImage.IsVisible = false;
                 AnimationView.Play();
                 break;
             case PullToRefreshState.Finished:
             case PullToRefreshState.Canceled:
                 AnimationView.Stop();
-                RefreshViewFontImageSource.Glyph = "circle-down";
+                RefreshViewArrowImage.IsVisible = true;
                 break;
+        }
+
+        await RotateRefreshViewArrowImage(e.State, _oldState);
+        _oldState = e.State;
+    }
+
+    private async Task RotateRefreshViewArrowImage(PullToRefreshState state, PullToRefreshState oldState)
+    {
+        if (oldState == state)
+            return;
+
+        if (state == PullToRefreshState.Finished || state == PullToRefreshState.Canceled || state == PullToRefreshState.Pulling)
+        {
+            await RefreshViewArrowImage.RotateToAsync(0);
+        }
+
+        if (state == PullToRefreshState.ReleaseToRefresh)
+        {
+            await RefreshViewArrowImage.RotateToAsync(180);
         }
     }
 }
