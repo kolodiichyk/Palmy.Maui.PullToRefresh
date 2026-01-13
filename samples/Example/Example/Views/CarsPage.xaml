@@ -17,6 +17,8 @@
     <pullToRefresh:PullToRefreshView x:Name="PullToRefresh"
                                      Margin="0"
                                      Padding="0"
+                                     AnimationTransition="{x:Static Easing.CubicIn}"
+                                     AutoResize="True"
                                      HorizontalOptions="Fill"
                                      IsRefreshing="{Binding IsRefreshing}"
                                      MaxPullDistance="420"
@@ -27,52 +29,6 @@
                                      Type="Normal"
                                      VerticalOptions="Fill">
         <pullToRefresh:PullToRefreshView.RefreshView>
-            <!--<Border Margin="0"
-                    Padding="0"
-                    HeightRequest="120"
-                    HorizontalOptions="Fill"
-                    StrokeThickness="0"
-                    ZIndex="999">
-                <lottie:LottieView x:Name="AnimationView"
-                                   Margin="0,15,0,0"
-                                   AutoPlay="False"
-                                   HardwareAcceleration="True"
-                                   HeightRequest="50"
-                                   HorizontalOptions="Center"
-                                   RepeatMode="Infinite"
-                                   Source="spinner.json"
-                                   VerticalOptions="Center"
-                                   WidthRequest="50" />
-            </Border>-->
-            <!--<ContentView HeightRequest="120" IsClippedToBounds="True">
-                <Border Margin="15"
-                        Padding="0"
-                        BackgroundColor="White"
-                        HeightRequest="60"
-                        HorizontalOptions="Center"
-                        Stroke="{StaticResource Secondary}"
-                        StrokeShape="RoundRectangle 30,30,30,30"
-                        StrokeThickness="0"
-                        VerticalOptions="Center"
-                        WidthRequest="60">
-                    <Border.Shadow>
-                        <Shadow Brush="{StaticResource Gray200}"
-                                Radius="10"
-                                Offset="0,0" />
-                    </Border.Shadow>
-                    <lottie:LottieView x:Name="AnimationView"
-                                       Margin="0,0,0,0"
-                                       AutoPlay="False"
-                                       HardwareAcceleration="True"
-                                       HeightRequest="40"
-                                       HorizontalOptions="Center"
-                                       RepeatMode="Infinite"
-                                       Source="spinner.json"
-                                       VerticalOptions="Center"
-                                       WidthRequest="40"
-                                       ZIndex="999" />
-                </Border>
-            </ContentView>-->
             <Border Margin="0"
                     Padding="0"
                     BackgroundColor="White"

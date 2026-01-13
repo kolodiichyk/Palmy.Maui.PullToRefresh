@@ -36,6 +36,14 @@ public partial class PullToRefreshView : ContentView
 	public static readonly BindableProperty TypeProperty =
 		BindableProperty.Create(nameof(Type), typeof(PullToRefreshType), typeof(PullToRefreshView), PullToRefreshType.Normal, propertyChanged:OnTypePropertyChanged);
 
+	public static readonly BindableProperty AutoResizeProperty =
+		BindableProperty.Create(nameof(AutoResize), typeof(bool), typeof(PullToRefreshView), false);
+
+	public static readonly BindableProperty AnimationTransitionProperty =
+		BindableProperty.Create(nameof(AnimationTransition), typeof(Easing), typeof(PullToRefreshView), Easing.Default);
+
+
+
 	public PullToRefreshView()
 	{
 		SetStrategy(new Normal(this));
@@ -65,6 +73,18 @@ public partial class PullToRefreshView : ContentView
 	{
 		get => (PullToRefreshType)GetValue(TypeProperty);
 		set => SetValue(TypeProperty, value);
+	}
+
+	public bool AutoResize
+	{
+		get => (bool)GetValue(AutoResizeProperty);
+		set => SetValue(AutoResizeProperty, value);
+	}
+
+	public Easing AnimationTransition
+	{
+		get => (Easing)GetValue(AnimationTransitionProperty);
+		set => SetValue(AnimationTransitionProperty, value);
 	}
 
 	public double RefreshHeight

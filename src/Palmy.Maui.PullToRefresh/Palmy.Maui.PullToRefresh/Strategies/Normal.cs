@@ -98,6 +98,14 @@ internal class Normal(PullToRefreshView pullToRefreshView) : IPullToRefreshStrat
 		var newTranslationY = Math.Max(0, actualPullDistance);
 
 		_containerGrid.TranslationY = newTranslationY;
+
+		if (pullToRefreshView.AutoResize &&
+		    _containerGrid.TranslationY > pullToRefreshView.RefreshHeight)
+		{
+			_refreshView.HeightRequest = Math.Ceiling(_containerGrid.TranslationY) + 1;
+			_refreshView.TranslationY = - Math.Ceiling(_containerGrid.TranslationY) - 1;
+		}
+
 		var state = newTranslationY < pullToRefreshView.RefreshHeight ?  PullToRefreshState.Pulling : PullToRefreshState.ReleaseToRefresh;
 		var percentage = newTranslationY / pullToRefreshView.RefreshHeight * 100;
 
@@ -118,7 +126,15 @@ internal class Normal(PullToRefreshView pullToRefreshView) : IPullToRefreshStrat
 			var animation = new Animation(v => _containerGrid.TranslationY = v,
 				_containerGrid.TranslationY,
 				pullToRefreshView.RefreshHeight);
-			animation.Commit(pullToRefreshView, "HeightAnimation", 16, 250, Easing.CubicInOut);
+			animation.Add(0, 1, new Animation(v => _refreshView.TranslationY = v,
+				_refreshView.TranslationY, -pullToRefreshView.RefreshHeight-2));
+			animation.Add(0, 1, new Animation(v => _refreshView.HeightRequest = v,
+				_refreshView.HeightRequest, pullToRefreshView.RefreshHeight+2));
+			animation.Commit(pullToRefreshView, "HandlePanFinishedAnimation", 16, 250, pullToRefreshView.AnimationTransition, finished: (_, _) =>
+			{
+				_refreshView.HeightRequest = pullToRefreshView.RefreshHeight;
+				_refreshView.TranslationY = -pullToRefreshView.RefreshHeight;
+			});
 			return new PullResult(state, 100);
 		}
 
@@ -136,15 +152,21 @@ internal class Normal(PullToRefreshView pullToRefreshView) : IPullToRefreshStrat
 
 		if (_refreshView != null)
 		{
-			var animation = new Animation(v => _containerGrid.TranslationY = v,
-				_containerGrid.TranslationY,
-				0);
-			animation.Commit(pullToRefreshView, "HeightAnimation", 16, 250, Easing.CubicInOut, finished: (_, _) =>
+			var animation =new Animation(v => _containerGrid.TranslationY = v,
+				_containerGrid.TranslationY, 0);
+			animation.Add(0, 1, new Animation(v => _refreshView.TranslationY = v,
+				_refreshView.TranslationY, -pullToRefreshView.RefreshHeight-2));
+			animation.Add(0, 1, new Animation(v => _refreshView.HeightRequest = v,
+				_refreshView.HeightRequest, pullToRefreshView.RefreshHeight+2));
+
+			animation.Commit(pullToRefreshView, "OnFinishedRefreshingAnimation", 16, 250, pullToRefreshView.AnimationTransition, finished: (_, _) =>
 			{
 				if (_contentView is CollectionView collectionView)
 				{
 					MainThread.BeginInvokeOnMainThread(()=>collectionView.ScrollTo(0));
 				}
+				_refreshView.HeightRequest = pullToRefreshView.RefreshHeight;
+				_refreshView.TranslationY = -pullToRefreshView.RefreshHeight;
 			});
 
 			return new PullResult(PullToRefreshState.Canceled, 0);
