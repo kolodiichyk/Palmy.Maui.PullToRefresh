@@ -3,7 +3,7 @@ using Palmy.Maui.PullToRefresh.Strategies;
 
 namespace Palmy.Maui.PullToRefresh.Interfaces;
 
-internal interface IPullToRefreshStrategy
+internal interface IPullToRefreshStrategy : IDisposable
 {
     void Initialize();
     void OnRefreshViewSet(View view);
@@ -14,4 +14,9 @@ internal interface IPullToRefreshStrategy
     PullResult? HandlePanMovement(double x, double y);
     PullResult? HandlePanFinished(double x, double y);
     PullResult? OnFinishedRefreshing(PullToRefreshState state);
+
+    /// <summary>
+    /// Cancels any running animations on the strategy
+    /// </summary>
+    void CancelAnimations();
 }

@@ -13,6 +13,9 @@ public partial class PullToRefreshView
 {
 	private ExtendedLinearLayoutManager? _extendedLinearLayoutManager;
 	private View? _scrollableView;
+	private OnItemTouchListener? _itemTouchListener;
+	private GenericTouchListener? _genericTouchListener;
+	private RecyclerView? _recyclerView;
 
 	public void InitializeCollectionView(Microsoft.Maui.Controls.View view)
 	{
@@ -35,41 +38,42 @@ public partial class PullToRefreshView
 
 	private RecyclerView InitializeRecyclerView(RecyclerView recyclerView)
 	{
+		_recyclerView = recyclerView;
 		_extendedLinearLayoutManager = new ExtendedLinearLayoutManager(recyclerView.Context);
 		recyclerView.SetLayoutManager(_extendedLinearLayoutManager);
 		recyclerView.Invalidate();
 
-		var itemTouchListener = new OnItemTouchListener(this);
-		recyclerView.AddOnItemTouchListener(itemTouchListener);
+		_itemTouchListener = new OnItemTouchListener(this);
+		recyclerView.AddOnItemTouchListener(_itemTouchListener);
 
 		return recyclerView;
 	}
 
 	private Android.Webkit.WebView InitializeWebView(Android.Webkit.WebView webView)
 	{
-		var touchListener = new GenericTouchListener(this);
-		webView.SetOnTouchListener(touchListener);
+		_genericTouchListener = new GenericTouchListener(this);
+		webView.SetOnTouchListener(_genericTouchListener);
 		return webView;
 	}
 
 	private NestedScrollView InitializeNestedScrollView(NestedScrollView nestedScrollView)
 	{
-		var touchListener = new GenericTouchListener(this);
-		nestedScrollView.SetOnTouchListener(touchListener);
+		_genericTouchListener = new GenericTouchListener(this);
+		nestedScrollView.SetOnTouchListener(_genericTouchListener);
 		return nestedScrollView;
 	}
 
 	private Android.Widget.ScrollView InitializeScrollView(Android.Widget.ScrollView scrollView)
 	{
-		var touchListener = new GenericTouchListener(this);
-		scrollView.SetOnTouchListener(touchListener);
+		_genericTouchListener = new GenericTouchListener(this);
+		scrollView.SetOnTouchListener(_genericTouchListener);
 		return scrollView;
 	}
 
 	private SwipeRefreshLayout InitializeSwipeRefreshLayout(SwipeRefreshLayout swipeRefreshLayout)
 	{
-		var touchListener = new GenericTouchListener(this);
-		swipeRefreshLayout.SetOnTouchListener(touchListener);
+		_genericTouchListener = new GenericTouchListener(this);
+		swipeRefreshLayout.SetOnTouchListener(_genericTouchListener);
 		return swipeRefreshLayout;
 	}
 
@@ -93,8 +97,8 @@ public partial class PullToRefreshView
 
 	private View InitializeGenericView(View view)
 	{
-		var touchListener = new GenericTouchListener(this);
-		view.SetOnTouchListener(touchListener);
+		_genericTouchListener = new GenericTouchListener(this);
+		view.SetOnTouchListener(_genericTouchListener);
 		return view;
 	}
 
@@ -154,15 +158,58 @@ public partial class PullToRefreshView
 			_ => 0
 		};
 	}
+
+	/// <summary>
+	/// Cleans up Android-specific resources
+	/// </summary>
+	private void CleanupPlatformResources()
+	{
+		// Remove and dispose item touch listener
+		if (_itemTouchListener != null && _recyclerView != null)
+		{
+			_recyclerView.RemoveOnItemTouchListener(_itemTouchListener);
+			_itemTouchListener.Dispose();
+			_itemTouchListener = null;
+		}
+
+		// Remove and dispose generic touch listener
+		if (_genericTouchListener != null && _scrollableView != null)
+		{
+			_scrollableView.SetOnTouchListener(null);
+			_genericTouchListener.Dispose();
+			_genericTouchListener = null;
+		}
+
+		// Dispose extended layout manager
+		if (_extendedLinearLayoutManager != null)
+		{
+			_extendedLinearLayoutManager.Dispose();
+			_extendedLinearLayoutManager = null;
+		}
+
+		_recyclerView = null;
+		_scrollableView = null;
+	}
 }
 
-public class OnItemTouchListener(PullToRefreshView pullToRefreshView)
-	: Java.Lang.Object, RecyclerView.IOnItemTouchListener
+public class OnItemTouchListener : Java.Lang.Object, RecyclerView.IOnItemTouchListener
 {
-	readonly PullToRefreshView? _pullToRefreshView = pullToRefreshView;
+	private readonly WeakReference<PullToRefreshView>? _pullToRefreshViewRef;
+
+	public OnItemTouchListener(PullToRefreshView pullToRefreshView)
+	{
+		_pullToRefreshViewRef = new WeakReference<PullToRefreshView>(pullToRefreshView);
+	}
+
+	private PullToRefreshView? PullToRefreshView =>
+		_pullToRefreshViewRef?.TryGetTarget(out var view) == true ? view : null;
 
 	public bool OnInterceptTouchEvent(RecyclerView recyclerView, MotionEvent @event)
 	{
+		var pullToRefreshView = PullToRefreshView;
+		if (pullToRefreshView == null)
+			return false;
+
 		var x = ConvertToDp(@event.GetX());
 		var y = ConvertToDp(@event.GetY());
 
@@ -175,13 +222,10 @@ public class OnItemTouchListener(PullToRefreshView pullToRefreshView)
 			_ => GestureStatus.Canceled
 		};
 
-		_pullToRefreshView?.OnInterceptPanUpdated(
+		pullToRefreshView.OnInterceptPanUpdated(
 			new PanUpdatedEventArgs(gestureStatus, 1, x, y));
 
-		if (_pullToRefreshView == null)
-			return false;
-
-		return _pullToRefreshView.State == PullToRefreshState.Refreshing;
+		return pullToRefreshView.State == PullToRefreshState.Refreshing;
 	}
 
 	public void OnRequestDisallowInterceptTouchEvent(bool disallow)
@@ -192,15 +236,19 @@ public class OnItemTouchListener(PullToRefreshView pullToRefreshView)
 	{
 	}
 
-	double ConvertToDp(double value)
+	private static double ConvertToDp(double value)
 	{
 		var density = DeviceDisplay.MainDisplayInfo.Density;
 		return value / density;
 	}
 }
 
-public class ExtendedLinearLayoutManager(Context? context) : LinearLayoutManager(context)
+public class ExtendedLinearLayoutManager : LinearLayoutManager
 {
+	public ExtendedLinearLayoutManager(Context? context) : base(context)
+	{
+	}
+
 	public override void OnLayoutChildren(RecyclerView.Recycler? recycler, RecyclerView.State? state)
 	{
 		try
@@ -213,18 +261,29 @@ public class ExtendedLinearLayoutManager(Context? context) : LinearLayoutManager
 		}
 	}
 
-	public bool IsScrollVerticallyEnabled { get; set; }= true;
+	public bool IsScrollVerticallyEnabled { get; set; } = true;
 	public override bool CanScrollVertically() => IsScrollVerticallyEnabled;
 }
 
-public class GenericTouchListener(PullToRefreshView pullToRefreshView)
-	: Java.Lang.Object, View.IOnTouchListener
+public class GenericTouchListener : Java.Lang.Object, View.IOnTouchListener
 {
-	readonly PullToRefreshView? _pullToRefreshView = pullToRefreshView;
+	private readonly WeakReference<PullToRefreshView>? _pullToRefreshViewRef;
+
+	public GenericTouchListener(PullToRefreshView pullToRefreshView)
+	{
+		_pullToRefreshViewRef = new WeakReference<PullToRefreshView>(pullToRefreshView);
+	}
+
+	private PullToRefreshView? PullToRefreshView =>
+		_pullToRefreshViewRef?.TryGetTarget(out var view) == true ? view : null;
 
 	public bool OnTouch(View? v, MotionEvent? e)
 	{
 		if (e == null)
+			return false;
+
+		var pullToRefreshView = PullToRefreshView;
+		if (pullToRefreshView == null)
 			return false;
 
 		var x = ConvertToDp(e.GetX());
@@ -239,13 +298,17 @@ public class GenericTouchListener(PullToRefreshView pullToRefreshView)
 			_ => GestureStatus.Canceled
 		};
 
-		_pullToRefreshView?.OnInterceptPanUpdated(
+		pullToRefreshView.OnInterceptPanUpdated(
 			new PanUpdatedEventArgs(gestureStatus, 1, x, y));
 
-		return true;
+		// Return false to allow touch events to propagate to other handlers
+		// Only consume events when actively pulling
+		return pullToRefreshView.State == PullToRefreshState.Pulling ||
+		       pullToRefreshView.State == PullToRefreshState.ReleaseToRefresh ||
+		       pullToRefreshView.State == PullToRefreshState.Refreshing;
 	}
 
-	double ConvertToDp(double value)
+	private static double ConvertToDp(double value)
 	{
 		var density = DeviceDisplay.MainDisplayInfo.Density;
 		return value / density;

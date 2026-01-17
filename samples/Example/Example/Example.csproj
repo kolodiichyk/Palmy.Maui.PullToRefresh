@@ -15,7 +15,7 @@
         <ApplicationTitle>Example</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.example</ApplicationId>
+        <ApplicationId>com.palmycode.pulltorefresh.example</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

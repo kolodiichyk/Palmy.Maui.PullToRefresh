@@ -6,9 +6,10 @@ using Palmy.Maui.PullToRefresh.Strategies;
 
 namespace Palmy.Maui.PullToRefresh;
 
-public partial class PullToRefreshView : ContentView
+public partial class PullToRefreshView : ContentView, IDisposable
 {
-	IPullToRefreshStrategy _strategy;
+	private IPullToRefreshStrategy? _strategy;
+	private bool _disposed;
 
 	public PullToRefreshState State
 	{
@@ -118,7 +119,7 @@ public partial class PullToRefreshView : ContentView
 
 		if (propertyName == nameof(Content))
 		{
-			_strategy.OnMainContentViewSet(Content);
+			_strategy?.OnMainContentViewSet(Content);
 		}
 
 		if (propertyName == nameof(SafeAreaEdges) && Content is Layout layout)
@@ -131,7 +132,7 @@ public partial class PullToRefreshView : ContentView
 	{
 		if (bindable is PullToRefreshView control)
 		{
-			control._strategy.OnRefreshViewSet((View)newValue);
+			control._strategy?.OnRefreshViewSet((View)newValue);
 		}
 	}
 
@@ -153,13 +154,16 @@ public partial class PullToRefreshView : ContentView
 
 	private void SetStrategy(IPullToRefreshStrategy strategy)
 	{
+		// Dispose the old strategy to clean up resources
+		_strategy?.Dispose();
+
 		_strategy = strategy;
 		_strategy.Initialize();
 	}
 
 	internal void OnInterceptPanUpdated(PanUpdatedEventArgs e)
 	{
-		if (State == PullToRefreshState.Refreshing)
+		if (State == PullToRefreshState.Refreshing || _strategy == null)
 			return;
 
 		switch (e.StatusType)
@@ -202,16 +206,66 @@ public partial class PullToRefreshView : ContentView
 	protected override void OnHandlerChanged()
 	{
 		base.OnHandlerChanged();
-		_strategy.OnHandlerChanged(Handler);
+
+		if (Handler == null)
+		{
+			// Handler is being disconnected - clean up resources
+			CleanupPlatformResources();
+			return;
+		}
+
+		_strategy?.OnHandlerChanged(Handler);
 	}
 
 	private void OnFinishedRefreshing(PullToRefreshState state)
 	{
-		var result = _strategy.OnFinishedRefreshing(state);
+		var result = _strategy?.OnFinishedRefreshing(state);
 		if (result != null)
 		{
 			State = result.State;
 			Pulling?.Invoke(this, new PullToRefreshEventArgs(result.State, result.Percentage));
 		}
+	}
+
+	/// <summary>
+	/// Disposes resources used by the PullToRefreshView
+	/// </summary>
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	/// <summary>
+	/// Disposes resources used by the PullToRefreshView
+	/// </summary>
+	/// <param name="disposing">True if disposing managed resources</param>
+	protected virtual void Dispose(bool disposing)
+	{
+		if (_disposed)
+			return;
+
+		if (disposing)
+		{
+			// Cancel any running animations
+			_strategy?.CancelAnimations();
+
+			// Dispose the strategy
+			_strategy?.Dispose();
+			_strategy = null;
+
+			// Clean up platform-specific resources
+			CleanupPlatformResources();
+
+			// Clear event handlers
+			Pulling = null;
+		}
+
+		_disposed = true;
+	}
+
+	~PullToRefreshView()
+	{
+		Dispose(false);
 	}
 }

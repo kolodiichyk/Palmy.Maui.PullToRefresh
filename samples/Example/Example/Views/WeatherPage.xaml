@@ -21,6 +21,7 @@
     <pullToRefresh:PullToRefreshView x:Name="PullToRefresh"
                                      AutoResize="True"
                                      IsRefreshing="{Binding IsRefreshing}"
+                                     MaxPullDistance="160"
                                      RefreshCommand="{Binding RefreshCommand}"
                                      RefreshHeight="80"
                                      Type="Normal">
@@ -109,7 +110,7 @@
                             <FontImageSource FontFamily="FontAwesomeSolid"
                                              Glyph="wind"
                                              Size="16"
-                                             Color="{StaticResource Tertiary}" />
+                                             Color="{StaticResource Gray600}" />
                         </Image.Source>
                     </Image>
                     <Label Grid.Row="4"

@@ -7,6 +7,8 @@ namespace Palmy.Maui.PullToRefresh;
 public partial class PullToRefreshView
 {
 	private UIScrollView? _scrollView;
+	private TouchInterceptorGestureRecognizer? _touchInterceptor;
+	private UIView? _platformView;
 
 	public void InitializeCollectionView(View view)
 	{
@@ -14,8 +16,9 @@ public partial class PullToRefreshView
 		if (platformView == null)
 			throw new NotSupportedException("Only UIView is supported");
 
-		var touchInterceptor = new TouchInterceptorGestureRecognizer(this);
-		platformView.AddGestureRecognizer(touchInterceptor);
+		_platformView = platformView;
+		_touchInterceptor = new TouchInterceptorGestureRecognizer(this);
+		platformView.AddGestureRecognizer(_touchInterceptor);
 
 		_scrollView = GetUIScrollView(view);
 	}
@@ -51,18 +54,38 @@ public partial class PullToRefreshView
 
 		return null;
 	}
+
+	/// <summary>
+	/// Cleans up iOS-specific resources
+	/// </summary>
+	private void CleanupPlatformResources()
+	{
+		if (_touchInterceptor != null && _platformView != null)
+		{
+			_platformView.RemoveGestureRecognizer(_touchInterceptor);
+			_touchInterceptor.Dispose();
+			_touchInterceptor = null;
+		}
+
+		_platformView = null;
+		_scrollView = null;
+	}
 }
 
 public sealed class TouchInterceptorGestureRecognizer : UIGestureRecognizer
 {
-	readonly PullToRefreshView? _pullToRefreshView;
+	private readonly WeakReference<PullToRefreshView>? _pullToRefreshViewRef;
+
 	public TouchInterceptorGestureRecognizer(PullToRefreshView pullToRefreshView)
 	{
-		_pullToRefreshView = pullToRefreshView;
+		_pullToRefreshViewRef = new WeakReference<PullToRefreshView>(pullToRefreshView);
 		CancelsTouchesInView = false;
 		DelaysTouchesBegan = false;
 		DelaysTouchesEnded = false;
 	}
+
+	private PullToRefreshView? PullToRefreshView =>
+		_pullToRefreshViewRef?.TryGetTarget(out var view) == true ? view : null;
 
 	void OnTouches(NSSet touches, GestureStatus gestureStatus)
 	{
@@ -75,7 +98,7 @@ public sealed class TouchInterceptorGestureRecognizer : UIGestureRecognizer
 			y = (float)location.Y;
 		}
 
-		_pullToRefreshView?.OnInterceptPanUpdated(
+		PullToRefreshView?.OnInterceptPanUpdated(
 			new PanUpdatedEventArgs(gestureStatus, 1, x, y));
 	}
 
@@ -91,11 +114,15 @@ public sealed class TouchInterceptorGestureRecognizer : UIGestureRecognizer
 		base.TouchesMoved(touches, evt);
 		OnTouches(touches, GestureStatus.Running);
 
-		if (_pullToRefreshView == null)
-			throw new NullReferenceException("PullToRefreshView can't be null.");
+		var pullToRefreshView = PullToRefreshView;
+		if (pullToRefreshView == null)
+		{
+			State = UIGestureRecognizerState.Cancelled;
+			return;
+		}
 
-		if (_pullToRefreshView.State == PullToRefreshState.Finished ||
-		    _pullToRefreshView.State == PullToRefreshState.Canceled)
+		if (pullToRefreshView.State == PullToRefreshState.Finished ||
+		    pullToRefreshView.State == PullToRefreshState.Canceled)
 		{
 			State = UIGestureRecognizerState.Began;
 		}
