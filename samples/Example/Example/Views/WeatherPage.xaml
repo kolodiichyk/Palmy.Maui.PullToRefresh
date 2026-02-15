@@ -19,7 +19,6 @@
     </views:BaseContentPage.Resources>
 
     <pullToRefresh:PullToRefreshView x:Name="PullToRefresh"
-                                     AutoResize="True"
                                      IsRefreshing="{Binding IsRefreshing}"
                                      MaxPullDistance="160"
                                      RefreshCommand="{Binding RefreshCommand}"

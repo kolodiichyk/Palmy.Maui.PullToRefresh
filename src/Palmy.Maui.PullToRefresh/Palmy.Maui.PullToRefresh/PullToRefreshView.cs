@@ -16,6 +16,9 @@ public partial class PullToRefreshView : ContentView, IDisposable
 		get;
 		private set
 		{
+			if (field == value)
+				return;
+
 			field = value;
 			SetContentScrollEnable(field == PullToRefreshState.Canceled || field == PullToRefreshState.Finished);
 		}
@@ -44,13 +47,8 @@ public partial class PullToRefreshView : ContentView, IDisposable
 	public static readonly BindableProperty TypeProperty =
 		BindableProperty.Create(nameof(Type), typeof(PullToRefreshType), typeof(PullToRefreshView), PullToRefreshType.Normal, propertyChanged:OnTypePropertyChanged);
 
-	public static readonly BindableProperty AutoResizeProperty =
-		BindableProperty.Create(nameof(AutoResize), typeof(bool), typeof(PullToRefreshView), false);
-
 	public static readonly BindableProperty AnimationTransitionProperty =
 		BindableProperty.Create(nameof(AnimationTransition), typeof(Easing), typeof(PullToRefreshView), Easing.Default);
-
-
 
 	public PullToRefreshView()
 	{
@@ -81,12 +79,6 @@ public partial class PullToRefreshView : ContentView, IDisposable
 	{
 		get => (PullToRefreshType)GetValue(TypeProperty);
 		set => SetValue(TypeProperty, value);
-	}
-
-	public bool AutoResize
-	{
-		get => (bool)GetValue(AutoResizeProperty);
-		set => SetValue(AutoResizeProperty, value);
 	}
 
 	public Easing AnimationTransition

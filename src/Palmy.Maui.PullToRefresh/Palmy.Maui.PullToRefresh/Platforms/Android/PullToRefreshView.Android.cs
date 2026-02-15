@@ -1,17 +1,14 @@
-using Android.Content;
 using Android.Views;
 using AndroidX.Core.View;
 using AndroidX.Core.Widget;
 using AndroidX.RecyclerView.Widget;
 using AndroidX.SwipeRefreshLayout.Widget;
-using Palmy.Maui.PullToRefresh.Enums;
 using View = Android.Views.View;
 
 namespace Palmy.Maui.PullToRefresh;
 
 public partial class PullToRefreshView
 {
-	private ExtendedLinearLayoutManager? _extendedLinearLayoutManager;
 	private View? _scrollableView;
 	private OnItemTouchListener? _itemTouchListener;
 	private GenericTouchListener? _genericTouchListener;
@@ -39,12 +36,13 @@ public partial class PullToRefreshView
 	private RecyclerView InitializeRecyclerView(RecyclerView recyclerView)
 	{
 		_recyclerView = recyclerView;
-		_extendedLinearLayoutManager = new ExtendedLinearLayoutManager(recyclerView.Context);
-		recyclerView.SetLayoutManager(_extendedLinearLayoutManager);
-		recyclerView.Invalidate();
 
-		_itemTouchListener = new OnItemTouchListener(this);
+		_genericTouchListener = new GenericTouchListener(this);
+		// Fix Down gesture and Scroll disable
+		_itemTouchListener = new OnItemTouchListener(this, _genericTouchListener);
+
 		recyclerView.AddOnItemTouchListener(_itemTouchListener);
+		recyclerView.SetOnTouchListener(_genericTouchListener);
 
 		return recyclerView;
 	}
@@ -77,7 +75,7 @@ public partial class PullToRefreshView
 		return swipeRefreshLayout;
 	}
 
-	private View? InitializeViewGroup(ViewGroup viewGroup)
+	private View InitializeViewGroup(ViewGroup viewGroup)
 	{
 		var scrollableChild = FindScrollableChild(viewGroup);
 		if (scrollableChild != null)
@@ -123,12 +121,6 @@ public partial class PullToRefreshView
 
 	public void SetContentScrollEnable(bool enable)
 	{
-		if (_extendedLinearLayoutManager != null)
-		{
-			_extendedLinearLayoutManager.IsScrollVerticallyEnabled = enable;
-			return;
-		}
-
 		switch (_scrollableView)
 		{
 			case NestedScrollView nestedScrollView:
@@ -139,6 +131,11 @@ public partial class PullToRefreshView
 				break;
 			case Android.Webkit.WebView webView:
 				webView.VerticalScrollBarEnabled = enable;
+				break;
+			case RecyclerView recyclerView:
+				ViewCompat.SetNestedScrollingEnabled(recyclerView, enable);
+				recyclerView.VerticalScrollBarEnabled = enable;
+				_itemTouchListener?.OnRequestDisallowInterceptTouchEvent(!enable);
 				break;
 		}
 	}
@@ -180,137 +177,7 @@ public partial class PullToRefreshView
 			_genericTouchListener = null;
 		}
 
-		// Dispose extended layout manager
-		if (_extendedLinearLayoutManager != null)
-		{
-			_extendedLinearLayoutManager.Dispose();
-			_extendedLinearLayoutManager = null;
-		}
-
 		_recyclerView = null;
 		_scrollableView = null;
-	}
-}
-
-public class OnItemTouchListener : Java.Lang.Object, RecyclerView.IOnItemTouchListener
-{
-	private readonly WeakReference<PullToRefreshView>? _pullToRefreshViewRef;
-
-	public OnItemTouchListener(PullToRefreshView pullToRefreshView)
-	{
-		_pullToRefreshViewRef = new WeakReference<PullToRefreshView>(pullToRefreshView);
-	}
-
-	private PullToRefreshView? PullToRefreshView =>
-		_pullToRefreshViewRef?.TryGetTarget(out var view) == true ? view : null;
-
-	public bool OnInterceptTouchEvent(RecyclerView recyclerView, MotionEvent @event)
-	{
-		var pullToRefreshView = PullToRefreshView;
-		if (pullToRefreshView == null)
-			return false;
-
-		var x = ConvertToDp(@event.GetX());
-		var y = ConvertToDp(@event.GetY());
-
-		GestureStatus gestureStatus = @event.Action switch
-		{
-			MotionEventActions.Down => GestureStatus.Started,
-			MotionEventActions.Move => GestureStatus.Running,
-			MotionEventActions.Cancel => GestureStatus.Canceled,
-			MotionEventActions.Up => GestureStatus.Completed,
-			_ => GestureStatus.Canceled
-		};
-
-		pullToRefreshView.OnInterceptPanUpdated(
-			new PanUpdatedEventArgs(gestureStatus, 1, x, y));
-
-		return pullToRefreshView.State == PullToRefreshState.Refreshing;
-	}
-
-	public void OnRequestDisallowInterceptTouchEvent(bool disallow)
-	{
-	}
-
-	public void OnTouchEvent(RecyclerView recyclerView, MotionEvent @event)
-	{
-	}
-
-	private static double ConvertToDp(double value)
-	{
-		var density = DeviceDisplay.MainDisplayInfo.Density;
-		return value / density;
-	}
-}
-
-public class ExtendedLinearLayoutManager : LinearLayoutManager
-{
-	public ExtendedLinearLayoutManager(Context? context) : base(context)
-	{
-	}
-
-	public override void OnLayoutChildren(RecyclerView.Recycler? recycler, RecyclerView.State? state)
-	{
-		try
-		{
-			base.OnLayoutChildren(recycler, state);
-		}
-		catch (Java.Lang.IndexOutOfBoundsException)
-		{
-			// Fix rare crash when disabling scroll
-		}
-	}
-
-	public bool IsScrollVerticallyEnabled { get; set; } = true;
-	public override bool CanScrollVertically() => IsScrollVerticallyEnabled;
-}
-
-public class GenericTouchListener : Java.Lang.Object, View.IOnTouchListener
-{
-	private readonly WeakReference<PullToRefreshView>? _pullToRefreshViewRef;
-
-	public GenericTouchListener(PullToRefreshView pullToRefreshView)
-	{
-		_pullToRefreshViewRef = new WeakReference<PullToRefreshView>(pullToRefreshView);
-	}
-
-	private PullToRefreshView? PullToRefreshView =>
-		_pullToRefreshViewRef?.TryGetTarget(out var view) == true ? view : null;
-
-	public bool OnTouch(View? v, MotionEvent? e)
-	{
-		if (e == null)
-			return false;
-
-		var pullToRefreshView = PullToRefreshView;
-		if (pullToRefreshView == null)
-			return false;
-
-		var x = ConvertToDp(e.GetX());
-		var y = ConvertToDp(e.GetY());
-
-		GestureStatus gestureStatus = e.Action switch
-		{
-			MotionEventActions.Down => GestureStatus.Started,
-			MotionEventActions.Move => GestureStatus.Running,
-			MotionEventActions.Cancel => GestureStatus.Canceled,
-			MotionEventActions.Up => GestureStatus.Completed,
-			_ => GestureStatus.Canceled
-		};
-
-		pullToRefreshView.OnInterceptPanUpdated(
-			new PanUpdatedEventArgs(gestureStatus, 1, x, y));
-
-		// Return false to allow touch events to propagate to other handlers
-		// Only consume events when actively pulling
-		return pullToRefreshView.State == PullToRefreshState.Pulling ||
-		       pullToRefreshView.State == PullToRefreshState.ReleaseToRefresh ||
-		       pullToRefreshView.State == PullToRefreshState.Refreshing;
-	}
-
-	private static double ConvertToDp(double value)
-	{
-		var density = DeviceDisplay.MainDisplayInfo.Density;
-		return value / density;
 	}
 }

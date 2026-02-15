@@ -89,7 +89,6 @@
                                     StrokeThickness="0"
                                     VerticalOptions="Center"
                                     WidthRequest="70" />
-                            <!--  Source="{Binding BrandImage}"  -->
 
                             <Label Grid.Row="0"
                                    Grid.Column="1"
